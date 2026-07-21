@@ -1,0 +1,13 @@
+myenv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+images/
+uploads/
+outputs/
+*.db
+
+static/uploads/
+status.txt

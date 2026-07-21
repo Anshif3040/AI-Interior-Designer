@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>InteriorAI - Smart Room Design Assistant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<script>
+
+function showLoading(){
+
+    document.getElementById("loading-screen").style.display="flex";
+
+}
+
+</script>
+<body>
+    <!-- Loading Overlay -->
+<div id="loading-screen" style="display:none;">
+
+    <div class="loader-box">
+
+        <div class="spinner-border text-light" role="status"></div>
+
+        <h3 class="mt-4">🤖 AI is Analyzing Your Room...</h3>
+
+        <p>Please wait while we generate your interior design.</p>
+
+    </div>
+
+</div>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">🏠 InteriorAI</a>
+        <a class="btn btn-outline-light btn-sm" href="/history">📊 Dashboard</a>
+    </div>
+</nav>
+
+<section class="hero text-center text-white py-5">
+    <div class="container">
+        <h1 class="display-5 fw-bold">Smart Room Design Assistant</h1>
+        <p class="lead">AI-powered room classification, design recommendation, budget estimation and report generation.</p>
+    </div>
+</section>
+
+<div class="container my-5">
+
+    <div class="card p-4 shadow">
+        <h3 class="mb-4">Analyze Your Room</h3>
+
+        <form method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
+
+            <div class="mb-3">
+                <label class="form-label">Upload Room Image</label>
+                <input class="form-control" type="file" name="image" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Length (m)</label>
+                    <input class="form-control" type="number" step="0.01" name="length" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Width (m)</label>
+                    <input class="form-control" type="number" step="0.01" name="width" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Height (m)</label>
+                    <input class="form-control" type="number" step="0.01" name="height" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Select Interior Style</label>
+                <select class="form-select" name="style">
+                    <option value="Modern">Modern</option>
+                    <option value="Luxury">Luxury</option>
+                    <option value="Minimalist">Minimalist</option>
+                    <option value="Scandinavian">Scandinavian</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">
+                🔍 Analyze Room
+            </button>
+
+        </form>
+    </div>
+
+    {% if prediction %}
+
+    <div class="row mt-4">
+
+        <div class="col-md-3">
+            <div class="card p-3 text-center shadow-sm">
+                <h6>Prediction</h6>
+                <h3>{{ prediction }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 text-center shadow-sm">
+                <h6>Confidence</h6>
+                <h3>{{ "%.2f"|format(confidence) }}%</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 text-center shadow-sm">
+                <h6>Area</h6>
+                <h3>{{ area }} m²</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 text-center shadow-sm">
+                <h6>Budget</h6>
+                <h3>₹ {{ "{:,}".format(total_budget) }}</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card p-4 mt-4 shadow-sm">
+        <h4>Top 3 Predictions</h4>
+        <ul>
+            {% for room, score in top_predictions %}
+            <li>{{ room }} - {{ score }}%</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% endif %}
+
+    {% if area %}
+
+    <div class="card p-4 mt-4 shadow-sm">
+        <h4>Room Measurements</h4>
+        <p><b>Length:</b> {{ length }} m</p>
+        <p><b>Width:</b> {{ width }} m</p>
+        <p><b>Height:</b> {{ height }} m</p>
+        <p><b>Selected Style:</b> {{ style }}</p>
+    </div>
+
+    {% endif %}
+
+    {% if recommendation %}
+
+    <div class="card p-4 mt-4 shadow-sm">
+        <h4>Interior Recommendation</h4>
+        <p>🎨 <b>Wall Color:</b> {{ recommendation.wall }}</p>
+        <p>🪵 <b>Floor:</b> {{ recommendation.floor }}</p>
+        <p>💡 <b>Lighting:</b> {{ recommendation.lighting }}</p>
+        <p>🪑 <b>Furniture:</b> {{ recommendation.furniture }}</p>
+    </div>
+
+    {% endif %}
+
+    {% if furniture %}
+
+    <div class="card p-4 mt-4 shadow-sm">
+        <h4>Furniture Recommendation</h4>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Furniture</th>
+                    <th>Estimated Cost</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for item, price in furniture %}
+                <tr>
+                    <td>{{ item }}</td>
+                    <td>₹ {{ "{:,}".format(price) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h4 class="text-success">Total Estimated Budget: ₹ {{ "{:,}".format(total_budget) }}</h4>
+    </div>
+
+    {% endif %}
+
+    {% if prompt %}
+
+    <div class="card p-4 mt-4 shadow-sm">
+        <h4>AI Prompt</h4>
+        <pre>{{ prompt }}</pre>
+    </div>
+
+    <div class="d-flex gap-3 mt-4 mb-5">
+        <button class="btn btn-success">
+            🎨 Generate AI Design
+        </button>
+
+        <a href="/download" class="btn btn-danger">
+            📄 Download PDF Report
+        </a>
+
+        <a href="/history" class="btn btn-dark">
+            📊 View Dashboard
+        </a>
+    </div>
+
+    {% endif %}
+  {% if uploaded_image or generated_image %}
+
+<div class="card p-4 mt-4 shadow-sm">
+
+    <h3 class="text-center mb-4">🖼️ Room Design Comparison</h3>
+
+    <div class="row">
+        <p class="text-muted text-center mt-3">
+    Note: The AI concept is generated from prompt-based visualization and may not preserve the exact original room layout.
+</p>
+
+        <!-- Uploaded Image -->
+        <div class="col-md-6">
+
+            <h5 class="text-center">📷 Uploaded Room</h5>
+
+            {% if uploaded_image %}
+            <img src="{{ url_for('static', filename='uploads/' + uploaded_image) }}"
+                 class="img-fluid rounded shadow"
+                 style="height:400px;width:100%;object-fit:cover;">
+            {% endif %}
+
+        </div>
+
+        <!-- AI Image -->
+        <div class="col-md-6">
+
+            <h5 class="text-center">🎨 AI Design Concept</h5>
+
+            <p class="text-muted text-center">
+                AI-generated concept based on prediction and style.
+            </p>
+
+            {% if generated_image %}
+            <img src="{{ generated_image }}"
+                 class="img-fluid rounded shadow"
+                 style="height:400px;width:100%;object-fit:cover;">
+                 <a href="{{ generated_image }}"
+                    download="ai_interior_concept.png"
+                    class="btn btn-success mt-3 w-100">
+
+                    📥 Download AI Concept
+
+            </a>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+</div>
+
+</body>
+</html>
