@@ -7,3 +7,4 @@ scikit-learn
 pillow
 flask
 gunicorn==23.0.0
+python-dotenv==1.1.1
